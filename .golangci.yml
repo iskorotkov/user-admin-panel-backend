@@ -1,0 +1,20 @@
+issues:
+  new: false
+output:
+  print-issued-lines: true
+  print-linter-name: true
+  unique-by-line: true
+severity:
+  default-severity: error
+  case-sensitive: false
+run:
+  timeout: 1m
+  tests: true
+  allow-parallel-runners: true
+  go: '1.18'
+  concurrency: 8
+  skip-dirs-use-default: true
+  skip-files:
+    - "api/routers.go"
+    - "api/api_users.go"
+    - "api/error.go"
