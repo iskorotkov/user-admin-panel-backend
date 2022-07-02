@@ -1,0 +1,9 @@
+go.mod
+README.md
+Dockerfile
+.openapi-generator-ignore
+
+main.go
+api/openapi.yaml
+api/api_users_service.go
+api/logger.go

@@ -1,0 +1,17 @@
+# General
+gitUserId: iskorotkov
+gitRepoId: user-admin-panel-backend
+
+# Go-specific
+enablePostProcessFile: true
+
+# Generator-specific
+addResponseHeaders: true
+enumClassPrefix: true
+featureCORS: true
+onlyInterfaces: false
+outputAsLibrary: false
+packageName: api
+router: mux
+serverPort: 8080
+sourceFolder: api
