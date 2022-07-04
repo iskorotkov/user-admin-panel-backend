@@ -1,12 +1,15 @@
 FROM golang:1.18-alpine AS build
 WORKDIR /go/src
-COPY api ./api
-COPY main.go .
 ENV CGO_ENABLED=0
+
+COPY ["go.mod", "go.sum", "./"]
 RUN go get -d -v ./...
-RUN go build -a -installsuffix cgo -o api .
+
+COPY . .
+RUN go build -a -installsuffix cgo -o app .
 
 FROM scratch AS runtime
-COPY --from=build /go/src/api ./
+COPY --from=build /go/src/app ./
+
 EXPOSE 8080/tcp
-ENTRYPOINT ["./api"]
+ENTRYPOINT ["./app"]

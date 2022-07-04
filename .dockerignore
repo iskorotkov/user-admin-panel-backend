@@ -1,0 +1,11 @@
+.dockerignore
+Dockerfile
+
+.vscode/
+.idea/
+.openapi-generator/
+.git/
+.gitignore
+Makefile
+*openapi*
+*.md
