@@ -13,17 +13,55 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
-	api "github.com/iskorotkov/user-admin-panel-backend/api"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
+	"github.com/gorilla/handlers"
+	"github.com/iskorotkov/user-admin-panel-backend/api"
+	"github.com/iskorotkov/user-admin-panel-backend/entities"
 )
 
 func main() {
-	log.Printf("Server started")
+	log.Printf("server starting")
 
-	UsersApiService := api.NewUsersApiService()
-	UsersApiController := api.NewUsersApiController(UsersApiService)
+	db := prepareDB()
 
-	router := api.NewRouter(UsersApiController)
+	usersApiService := api.NewUsersApiService(db)
+	usersApiController := api.NewUsersApiController(usersApiService, api.WithUsersApiErrorHandler(errorHandler))
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	router := api.NewRouter(usersApiController)
+	routerWithCORS := handlers.CORS(
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedOrigins([]string{"*"}),
+	)(router)
+
+	log.Printf("server started")
+
+	log.Fatal(http.ListenAndServe(":8080", routerWithCORS))
+}
+
+func prepareDB() *gorm.DB {
+	dsn := os.Getenv("POSTGRES_DSN")
+	if dsn == "" {
+		log.Fatalf("POSTGRES_DSN is not set")
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn))
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	if err := db.AutoMigrate(&entities.User{}); err != nil {
+		log.Fatalf("failed to migrate: %v", err)
+	}
+
+	return db
+}
+
+func errorHandler(w http.ResponseWriter, r *http.Request, err error, result *api.ImplResponse) {
+	log.Printf("[E] error in handler %s: %v", r.URL.String(), err)
+	api.DefaultErrorHandler(w, r, err, result)
 }

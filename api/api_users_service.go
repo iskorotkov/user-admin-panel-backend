@@ -14,82 +14,211 @@ import (
 	"context"
 	"errors"
 	"net/http"
+
+	"gorm.io/gorm"
+
+	"github.com/iskorotkov/user-admin-panel-backend/entities"
 )
 
 // UsersApiService is a service that implements the logic for the UsersApiServicer
 // This service should implement the business logic for every endpoint for the UsersApi API.
 // Include any external packages or services that will be required by this service.
 type UsersApiService struct {
+	db *gorm.DB
 }
 
 // NewUsersApiService creates a default api service
-func NewUsersApiService() UsersApiServicer {
-	return &UsersApiService{}
+func NewUsersApiService(db *gorm.DB) UsersApiServicer {
+	return &UsersApiService{db: db}
 }
 
 // All -
 func (s *UsersApiService) All(ctx context.Context) (ImplResponse, error) {
-	// TODO - update All with the required logic for this service method.
-	// Add api_users_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+	var users []entities.User
+	if err := s.db.Find(&users).Order("id asc").Error; err != nil {
+		return Response(
+			http.StatusInternalServerError, Error{
+				Code:    1001,
+				Message: "Error while getting users",
+				Errors:  []string{err.Error()},
+			},
+		), nil
+	}
 
-	//TODO: Uncomment the next line to return response Response(200, []User{}) or use other options such as http.Ok ...
-	//return Response(200, []User{}), nil
+	var res []User
+	for _, user := range users {
+		res = append(res, User{
+			Id: int32(user.ID),
+			NewUser: NewUser{
+				Name:   user.Name,
+				Phone:  user.Phone,
+				Email:  user.Email,
+				Gender: string(user.Gender),
+			},
+		})
+	}
 
-	return Response(http.StatusNotImplemented, nil), errors.New("All method not implemented")
+	return Response(http.StatusOK, res), nil
 }
 
 // Create -
 func (s *UsersApiService) Create(ctx context.Context, newUser NewUser) (ImplResponse, error) {
-	// TODO - update Create with the required logic for this service method.
-	// Add api_users_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+	userToCreate := entities.User{
+		Name:   newUser.Name,
+		Phone:  newUser.Phone,
+		Email:  newUser.Email,
+		Gender: entities.Gender(newUser.Gender),
+	}
 
-	//TODO: Uncomment the next line to return response Response(201, User{}) or use other options such as http.Ok ...
-	//return Response(201, User{}), nil
+	userToCreate = userToCreate.Trim()
 
-	//TODO: Uncomment the next line to return response Response(422, Error{}) or use other options such as http.Ok ...
-	//return Response(422, Error{}), nil
+	if errs := userToCreate.Validate(); errs != nil {
+		return Response(
+			http.StatusUnprocessableEntity, Error{
+				Code:    2001,
+				Message: "User has validation errors",
+				Errors:  errs.Slice(),
+			},
+		), nil
+	}
 
-	return Response(http.StatusNotImplemented, nil), errors.New("Create method not implemented")
+	if err := s.db.Create(&userToCreate).Error; err != nil {
+		return Response(
+			http.StatusUnprocessableEntity, Error{
+				Code:    2002,
+				Message: "Error while creating user",
+				Errors:  []string{err.Error()},
+			},
+		), nil
+	}
+
+	return Response(
+		http.StatusCreated, User{
+			Id:      int32(userToCreate.ID),
+			NewUser: newUser,
+		},
+	), nil
 }
 
 // Delete -
 func (s *UsersApiService) Delete(ctx context.Context, id int32) (ImplResponse, error) {
-	// TODO - update Delete with the required logic for this service method.
-	// Add api_users_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+	var user entities.User
+	if err := s.db.Find(&user, id).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return Response(http.StatusInternalServerError, nil), err
+	}
 
-	//TODO: Uncomment the next line to return response Response(200, User{}) or use other options such as http.Ok ...
-	//return Response(200, User{}), nil
+	if err := s.db.Where("id = ?", id).Delete(&entities.User{}).Error; err != nil {
+		return Response(
+			http.StatusInternalServerError, Error{
+				Code:    3001,
+				Message: "Error while deleting user",
+				Errors:  []string{err.Error()},
+			},
+		), nil
+	}
 
-	return Response(http.StatusNotImplemented, nil), errors.New("Delete method not implemented")
+	res := User{
+		Id: int32(id),
+		NewUser: NewUser{
+			Name:   user.Name,
+			Phone:  user.Phone,
+			Email:  user.Email,
+			Gender: string(user.Gender),
+		},
+	}
+
+	return Response(http.StatusOK, res), nil
 }
 
 // Single -
 func (s *UsersApiService) Single(ctx context.Context, id int32) (ImplResponse, error) {
-	// TODO - update Single with the required logic for this service method.
-	// Add api_users_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+	var user entities.User
+	if err := s.db.Find(&user, id).Error; err != nil {
+		return Response(http.StatusInternalServerError, nil), err
+	}
 
-	//TODO: Uncomment the next line to return response Response(200, User{}) or use other options such as http.Ok ...
-	//return Response(200, User{}), nil
+	if user.ID == 0 {
+		return Response(
+			http.StatusNotFound, Error{
+				Code:    4001,
+				Message: "User not found",
+				Errors:  []string{"record not found"},
+			},
+		), nil
+	}
 
-	//TODO: Uncomment the next line to return response Response(404, Error{}) or use other options such as http.Ok ...
-	//return Response(404, Error{}), nil
+	res := User{
+		Id: int32(user.ID),
+		NewUser: NewUser{
+			Name:   user.Name,
+			Phone:  user.Phone,
+			Email:  user.Email,
+			Gender: string(user.Gender),
+		},
+	}
 
-	return Response(http.StatusNotImplemented, nil), errors.New("Single method not implemented")
+	return Response(http.StatusOK, res), nil
 }
 
 // Update -
 func (s *UsersApiService) Update(ctx context.Context, id int32, user User) (ImplResponse, error) {
-	// TODO - update Update with the required logic for this service method.
-	// Add api_users_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+	if id != user.Id {
+		return Response(http.StatusUnprocessableEntity, Error{
+			Code:    5001,
+			Message: "User id mismatch",
+			Errors:  []string{"id mismatch"},
+		}), nil
+	}
 
-	//TODO: Uncomment the next line to return response Response(200, User{}) or use other options such as http.Ok ...
-	//return Response(200, User{}), nil
+	var userToUpdate entities.User
+	if err := s.db.Find(&userToUpdate, id).Error; err != nil {
+		return Response(http.StatusInternalServerError, nil), err
+	}
 
-	//TODO: Uncomment the next line to return response Response(201, User{}) or use other options such as http.Ok ...
-	//return Response(201, User{}), nil
+	if userToUpdate.ID == 0 {
+		userToUpdate.ID = uint(user.Id)
+	}
 
-	//TODO: Uncomment the next line to return response Response(422, Error{}) or use other options such as http.Ok ...
-	//return Response(422, Error{}), nil
+	userToUpdate = entities.User{
+		Model:  userToUpdate.Model,
+		Name:   user.Name,
+		Phone:  user.Phone,
+		Email:  user.Email,
+		Gender: entities.Gender(user.Gender),
+	}
 
-	return Response(http.StatusNotImplemented, nil), errors.New("Update method not implemented")
+	userToUpdate = userToUpdate.Trim()
+
+	if errs := userToUpdate.Validate(); errs != nil {
+		return Response(
+			http.StatusUnprocessableEntity, Error{
+				Code:    5002,
+				Message: "User has validation errors",
+				Errors:  errs.Slice(),
+			},
+		), nil
+	}
+
+	if err := s.db.Save(&userToUpdate).Error; err != nil {
+		return Response(
+			http.StatusUnprocessableEntity, Error{
+				Code:    5003,
+				Message: "Error while creating user",
+				Errors:  []string{err.Error()},
+			},
+		), nil
+	}
+
+	// User was updated.
+	if user.Id != 0 {
+		return Response(http.StatusOK, user), nil
+	}
+
+	// User was created.
+	return Response(
+		http.StatusCreated, User{
+			Id:      int32(userToUpdate.ID),
+			NewUser: user.NewUser,
+		},
+	), nil
 }
