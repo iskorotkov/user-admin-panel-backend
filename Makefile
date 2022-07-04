@@ -1,10 +1,9 @@
-openapi-validate:
-	openapi-generator-cli validate \
-		-i openapi.yml
+GO_POST_PROCESS_FILE='gofmt -w'
+OPENAPI_SPEC_FILE=../user-admin-panel-common/openapi.yml
 
-openapi-generate:
-	GO_POST_PROCESS_FILE='gofmt -w' openapi-generator-cli generate \
+openapi:
+	GO_POST_PROCESS_FILE=$(GO_POST_PROCESS_FILE) openapi-generator-cli generate \
 		-g go-server \
-		-i openapi.yml \
+		-i $(OPENAPI_SPEC_FILE) \
 		-o ./ \
 		-c openapi.config.yml

@@ -1,8 +1,6 @@
 # General
 gitUserId: iskorotkov
 gitRepoId: user-admin-panel-backend
-
-# Go-specific
 enablePostProcessFile: true
 
 # Generator-specific
