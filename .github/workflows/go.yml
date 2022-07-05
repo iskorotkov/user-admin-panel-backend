@@ -31,4 +31,4 @@ jobs:
     - name: Build image
       uses: docker/build-push-action@v3.0.0
       with:
-        tags: user-admin-panel-backend:latest
+        tags: iskorotkov/user-admin-panel-backend:latest
