@@ -1,0 +1,34 @@
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
+    
+    - name: Lint
+      uses: golangci/golangci-lint-action@v3.2.0
+      
+      # We can also push images to image registry in production projects, but I don't want to pollute it with my test assignments.
+    - name: Build image
+      uses: docker/build-push-action@v3.0.0
+      with:
+        tags: iskorotkov/user-admin-panel-backend:latest
