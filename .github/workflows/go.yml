@@ -26,3 +26,9 @@ jobs:
     
     - name: Lint
       uses: golangci/golangci-lint-action@v3.2.0
+      
+      # We can also push images to image registry in production projects, but I don't want to pollute it with my test assignments.
+    - name: Build image
+      uses: docker/build-push-action@v3.0.0
+      with:
+        tags: user-admin-panel-backend:latest
