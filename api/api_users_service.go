@@ -45,7 +45,7 @@ func (s *UsersApiService) All(ctx context.Context) (ImplResponse, error) {
 		), nil
 	}
 
-	var res []User
+	res := make([]User, 0, len(users))
 	for _, user := range users {
 		res = append(res, User{
 			Id: int32(user.ID),
